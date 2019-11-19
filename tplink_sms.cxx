@@ -73,7 +73,7 @@ namespace tplink_sms {
 		 SMS_SENDING = 4
 	};
 
-	/** \fn std::string get_md5_hash(std::string & passwd)
+	/** \fn std::string get_md5_hash(std::string & str)
 	 *	\brief Generates a MD5 hash of the given string.
 	 *	\param str : string to compute the MD5 hash from.
 	 *	\returns a string containing the MD5 hash of the input string.
