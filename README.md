@@ -18,7 +18,8 @@ On command line, in source folder, type:
 ```
 
 # Usage of TPLink_M7350 C++ class
-See documentation in *doc* folder.
+At the moment I didn't write a compilation script to produce a library. Therefore one must take care of including the header and the cxx file in one's own source tree.
+For details on class methods and features, see documentation in *doc* folder.
 
 # Usage of example program
 ` $ ./send_sms -a modem_address -p password -n phone_number -m message`
