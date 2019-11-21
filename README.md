@@ -10,15 +10,15 @@ This is a minimal C++ driver to communicate with TP-Link M7350 v5 modems. It com
 
 # Compilation
 This can be done easily with CMake using the provided CMakeLists.txt file.
-In source folder, type:
-> mkdir build && cd build
-
-> cmake ..
-
-> make
+On command line, in source folder, type:
+```
+ $ mkdir build && cd build
+ $ cmake ..
+ $ make
+```
 
 # Usage of TPLink_M7350 C++ class
 See documentation in *doc* folder.
 
 # Usage of example program
-> ./send_sms -a modem_address -p password -n phone_number -m message
+` $ ./send_sms -a modem_address -p password -n phone_number -m message
