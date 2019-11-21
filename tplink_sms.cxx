@@ -74,34 +74,22 @@ namespace tplink_sms {
 	};
 
 	/** \fn std::string get_md5_hash(std::string & str)
-	 *	\brief Generates a MD5 hash of the given string.
+	 *	\brief Generates a hex digest of the MD5 hash of the given string.
 	 *	\param str : string to compute the MD5 hash from.
-	 *	\returns a string containing the MD5 hash of the input string.
+	 *	\returns a string containing the hex digest of the MD5 hash of the input string.
 	 */
 	std::string get_md5_hash(std::string & str) {
 		unsigned char digest[16];
+		// MD5 functions from OpenSSL
 		MD5_CTX ctx;
 		MD5_Init(&ctx);
 		MD5_Update(&ctx, str.c_str(), str.size());
 		MD5_Final(digest, &ctx);
-		char md_string[33];
-		for (int i = 0; i < 16; i++)
-			sprintf(&md_string[i*2], "%02x", (unsigned int)digest[i]);
-
-		return std::string(md_string);
-	}
-
-	/** \fn std::string hexdigest(std::string & str)
-	 *	\brief Generates a hex digest of the given string.
-	 *	\param str : string to digest.
-	 *	\returns a string containing a hexadecimal representation of the input string.
-	 */
-	std::string hexdigest(std::string & str) {
+		
 		std::ostringstream res;
-		res << std::hex;
-		for (int i=0; i<str.size(); i++)
-			res << str[i];
-		return res.str();
+		for (int i=0; i<16; i++)
+			res << std::setfill('0') << std::setw(2) << std::hex << (unsigned int)digest[i];
+		
 	}
 
 	/* CURL error buffer */
@@ -216,8 +204,7 @@ namespace tplink_sms {
 		{
 			// create salted password MD5 digest
 			std::string spwd = passwd+":"+d["nonce"].GetString();
-			std::string md5_hash = get_md5_hash(spwd);
-			std::string auth_digest =	hexdigest(md5_hash);
+			std::string auth_digest = get_md5_hash(spwd);
 			// build JSON request object
 			rj::StringBuffer s;
 			rj::Writer<rj::StringBuffer> writer(s);
