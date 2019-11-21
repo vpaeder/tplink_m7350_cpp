@@ -5,9 +5,10 @@ Example C++ code showing how to send SMS with TP-Link M7350 v5 modem from comman
 - RapidJSON
 - CURL
 - OpenSSL
+- Doxygen (for docs, optional)
 
 # Compilation
 This can be done easily with CMake using the provided CMakeLists.txt file.
 
 # Usage
-> ./tplink_sms -a modem_address -p password -n phone_number -m message
+> ./send_sms -a modem_address -p password -n phone_number -m message
