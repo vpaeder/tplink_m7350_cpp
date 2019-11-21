@@ -90,6 +90,7 @@ namespace tplink_sms {
 		for (int i=0; i<16; i++)
 			res << std::setfill('0') << std::setw(2) << std::hex << (unsigned int)digest[i];
 		
+		return res.str();
 	}
 
 	/* CURL error buffer */
