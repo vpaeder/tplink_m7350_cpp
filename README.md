@@ -21,4 +21,4 @@ On command line, in source folder, type:
 See documentation in *doc* folder.
 
 # Usage of example program
-` $ ./send_sms -a modem_address -p password -n phone_number -m message
+` $ ./send_sms -a modem_address -p password -n phone_number -m message`
