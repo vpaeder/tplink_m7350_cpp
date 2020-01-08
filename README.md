@@ -8,7 +8,7 @@ This is a minimal C++ driver to communicate with TP-Link M7350 v5 modems. It com
 - CMake (for compilation, optional) - https://cmake.org
 - Doxygen (for docs, optional) - http://doxygen.nl
 
-# Compilation
+# Compiling
 This can be done easily with CMake using the provided CMakeLists.txt file.
 On command line, in source folder, type:
 ```
