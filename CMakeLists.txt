@@ -11,9 +11,10 @@ FIND_PACKAGE(CURL REQUIRED)
 
 FIND_PACKAGE(Doxygen)
 IF (DOXYGEN_FOUND)
-	option(BUILD_DOC "Build documentation" ON)
+	option(BUILD_DOC "Build documentation" OFF)
 ENDIF()
 
+INCLUDE(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -24,7 +25,8 @@ add_library ( tplinkpp SHARED tplink_m7350.cxx )
 target_include_directories(tplinkpp PUBLIC ${CURL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${RapidJSON_INCLUDE_DIR})
 target_link_libraries(tplinkpp ${CURL_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARIES})
 set_target_properties(tplinkpp PROPERTIES VERSION ${PROJECT_VERSION})
-install(TARGETS tplinkpp DESTINATION lib)
+install(TARGETS tplinkpp LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tplinkpp)
 
 add_executable(send_sms send_sms.cxx)
 target_link_libraries(send_sms tplinkpp)
