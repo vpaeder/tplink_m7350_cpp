@@ -15,11 +15,6 @@
 #include <openssl/md5.h>
 
 namespace tplink {
-	/** \fn std::string get_md5_hash(std::string & str)
-	 *	\brief Generates a hex digest of the MD5 hash of the given string.
-	 *	\param str : string to compute the MD5 hash from.
-	 *	\returns a string containing the hex digest of the MD5 hash of the input string.
-	 */
 	std::string get_md5_hash(std::string & str) {
 		unsigned char digest[16];
 		// MD5 functions from OpenSSL
@@ -60,12 +55,6 @@ namespace tplink {
 		return s.GetString();
 	}
 
-	/** \fn rapidjson::Document post_data(std::string & url, std::string & data)
-	 *	\brief Requests given URL with given data using POST method.
-	 *	\param url : URL to request
-	 *	\param data : data string to join to the request
-	 *	\returns a rapidjson::Document object containing the server response parsed as JSON.
-	 */
 	rapidjson::Document post_data(std::string & url, std::string & data) {
 		CURL *conn = NULL;
 		CURLcode code;
