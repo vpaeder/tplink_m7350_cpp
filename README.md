@@ -17,12 +17,14 @@ On command line, in source folder, type:
  $ mkdir build && cd build
  $ cmake ..
  $ make
+ $ sudo make install
 ```
+To build documentation, add option `-DBUILD_DOC=1` to `cmake`.
 
 # Usage of TPLink_M7350 C++ class
 For details on class methods and features, see documentation in *doc* folder.
 
-When building a project that requires `tplinkpp`, remember to add it to the list of dependencies.
+When building a project that requires `tplinkpp`, remember to add it to the list of dependencies. Header files are installed in the subdirectory `tplinkpp` of the *include* folder.
 
 # Usage of example program
 ` $ ./send_sms -a modem_address -p password -n phone_number -m message`
