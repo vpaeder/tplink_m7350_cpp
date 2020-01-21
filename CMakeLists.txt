@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(tplinkpp)
+project(tplinkpp
+	VERSION "0.1.0"
+	LANGUAGES CXX
+)
 
 FIND_PACKAGE(RapidJSON REQUIRED)
 FIND_PACKAGE(OpenSSL REQUIRED) # for MD5 hash
@@ -20,6 +23,7 @@ set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 add_library ( tplinkpp SHARED tplink_m7350.cxx )
 target_include_directories(tplinkpp PUBLIC ${CURL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${RapidJSON_INCLUDE_DIR})
 target_link_libraries(tplinkpp ${CURL_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARIES})
+set_target_properties(tplinkpp PROPERTIES VERSION ${PROJECT_VERSION})
 install(TARGETS tplinkpp DESTINATION lib)
 
 add_executable(send_sms send_sms.cxx)
