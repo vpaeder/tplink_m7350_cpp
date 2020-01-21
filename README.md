@@ -1,6 +1,8 @@
 # TP-Link M7350 v5 C++ driver
 This is a minimal C++ driver to communicate with TP-Link M7350 v5 modems. It comes with an example program showing how to send SMS from the command line.
 
+Note that it may work with other TP-Link models, but I only have that one to test. Returns on experience (with hardware and firmware versions) are of course welcome.
+
 # Requirements
 - RapidJSON - https://rapidjson.org
 - CURL - https://curl.haxx.se/libcurl/
@@ -18,8 +20,9 @@ On command line, in source folder, type:
 ```
 
 # Usage of TPLink_M7350 C++ class
-At the moment I didn't write a compilation script to produce a library. Therefore one must take care of including the header and the cxx file in one's own source tree.
 For details on class methods and features, see documentation in *doc* folder.
+
+When building a project that requires `tplinkpp`, remember to add it to the list of dependencies.
 
 # Usage of example program
 ` $ ./send_sms -a modem_address -p password -n phone_number -m message`
