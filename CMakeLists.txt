@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(tplink_send_sms)
+project(tplinkpp)
 
 FIND_PACKAGE(RapidJSON REQUIRED)
 FIND_PACKAGE(OpenSSL REQUIRED) # for MD5 hash
@@ -11,12 +11,20 @@ IF (DOXYGEN_FOUND)
 	option(BUILD_DOC "Build documentation" ON)
 ENDIF()
 
-set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -std=c++11)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(send_sms tplink_m7350.cxx send_sms.cxx)
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -DDEBUG")
+set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 
-target_include_directories(send_sms PUBLIC ${CURL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${RapidJSON_INCLUDE_DIR})
-target_link_libraries(send_sms ${CURL_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARIES})
+add_library ( tplinkpp SHARED tplink_m7350.cxx )
+target_include_directories(tplinkpp PUBLIC ${CURL_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${RapidJSON_INCLUDE_DIR})
+target_link_libraries(tplinkpp ${CURL_LIBRARIES} ${OPENSSL_CRYPTO_LIBRARIES})
+install(TARGETS tplinkpp DESTINATION lib)
+
+add_executable(send_sms send_sms.cxx)
+target_link_libraries(send_sms tplinkpp)
+install(TARGETS send_sms DESTINATION bin)
 
 # Documentation
 IF (DOXYGEN_FOUND AND BUILD_DOC)
