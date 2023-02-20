@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(tplinkpp
-	VERSION "0.1.0"
+	VERSION "0.1.1"
 	LANGUAGES CXX
 )
 
@@ -18,7 +18,7 @@ INCLUDE(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g -DDEBUG")
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -g")
 set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 
 add_library ( tplinkpp SHARED tplink_m7350.cxx )
