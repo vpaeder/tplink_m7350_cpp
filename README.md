@@ -3,6 +3,8 @@ This is a minimal C++ driver to communicate with TP-Link M7350 v5 modems. It com
 
 Note that it may work with other TP-Link models, but I only have that one to test. Returns on experience (with hardware and firmware versions) are of course welcome.
 
+**Important note:** the latest firmware has a new log-in mechanism incompatible with the current version of this code.
+
 # Requirements
 - RapidJSON - https://rapidjson.org
 - CURL - https://curl.haxx.se/libcurl/
