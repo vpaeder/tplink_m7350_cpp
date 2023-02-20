@@ -10,9 +10,28 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 #include <rapidjson/document.h>
 
 namespace tplink {
+
+  template <typename... Args> void tp_logger(const char * level, const char * file, const int line, const Args... args) {
+      std::cout << level << ":[" << file << "|" << line << "] ";
+      ([&]{std::cout << args;}(), ...);
+      std::cout << std::endl;
+  }
+  #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+  #ifndef NDEBUG
+  #define LOG_V(...) tp_logger("V", __FILENAME__, __LINE__, __VA_ARGS__)
+  #define LOG_D(...) tp_logger("D", __FILENAME__, __LINE__, __VA_ARGS__)
+  #define LOG_E(...) tp_logger("E", __FILENAME__, __LINE__, __VA_ARGS__)
+  #define LOG_I(...) tp_logger("I", __FILENAME__, __LINE__, __VA_ARGS__)
+  #else
+  #define LOG_V(...)
+  #define LOG_D(...)
+  #define LOG_E(...)
+  #define LOG_I(...)
+  #endif
   
   /** \enum TPLINK_CONFIG_ENUM
    *  \brief Shared command codes for TP-Link M7350 web_cgi modules.
@@ -119,22 +138,15 @@ namespace tplink {
    *  \param str : string to compute hash for.
    *  \returns MD5 hash of input string.
    */
-  std::string get_md5_hash(std::string & str);
-  
-  /** \fn std::string hexdigest(std::string & str)
-   *  \brief Compute hex digest of input string.
-   *  \param str : string to compute hex digest for.
-   *  \returns hex digest of input string.
-   */
-  std::string hexdigest(std::string & str);
-  
+  std::string get_md5_hash(const std::string & str);
+    
   /** \fn rj::Document post_data(std::string & url, std::string & data)
    *  \brief Sends a HTTP POST request to given URL with given POST data and returns reply parsed as JSON.
    *  \param url : URL to send request to.
    *  \param data : data to join with the POST request.
    *  \returns a RapidJSON document object containing parsed server reply.
    */
-  rj::Document post_data(std::string & url, std::string & data);
+  rj::Document post_data(const std::string & url, const std::string & data);
 
   /** \class TPLink_M7350
    *  \brief Class handling communication with a TP-Link M7350 v5 web interface.
@@ -172,7 +184,7 @@ namespace tplink {
      *  \param action : code of action to perform
      *  \returns a RapidJSON object containing necessary items.
      */
-    rj::Document build_request_object(std::string module, int action);
+    rj::Document build_request_object(const std::string & module, const int action);
     
     /** \fn rj::Document send_request(std::string module, int action)
      *  \brief Sends a request to the modem's web gateway interface and returns reply.
@@ -180,7 +192,7 @@ namespace tplink {
      *  \param action : code of action to perform
      *  \returns a RapidJSON object containing modem's reply, or an empty object if request failed.
      */
-    rj::Document send_request(std::string module, int action);
+    rj::Document send_request(const std::string & module, const int action);
     
     /** \fn bool send_data(std::string module, int action, rj::Document & data)
      *  \brief Sends data to the modem's web gateway interface.
@@ -189,7 +201,7 @@ namespace tplink {
      *  \param data : JSON object containing data to be sent
      *  \returns true if operation was successful, false otherwise.
      */
-    bool send_data(std::string module, int action, rj::Document & data);
+    bool send_data(const std::string & module, const int action, const rj::Document & data);
     
     /** \fn rj::Document get_data_array(rj::Document & request, std::string field)
      *  \brief Retrieves data array from modem's web gateway interface.
@@ -197,19 +209,17 @@ namespace tplink {
      *  \param field : name of data array.
      *  \returns a JSON object containing the requested data array, or an empty object if request failed.
      */
-    rj::Document get_data_array(rj::Document & request, std::string field);
+    rj::Document get_data_array(rj::Document & request, const std::string & field);
     
   public:
-    /** \fn TPLink_M7350()
-     *  \brief Default constructor.
-     */
-    TPLink_M7350() {}
+    TPLink_M7350() = default;
+    
     /** \fn TPLink_M7350(std::string & modem_address, std::string & password)
      *  \brief Instance constructor.
      *  \param modem_address : IP or DNS address of modem
      *  \param password : modem admin password
      */
-    TPLink_M7350(std::string & modem_address, std::string & password) {
+    TPLink_M7350(const std::string & modem_address, const std::string & password) {
       this->set_address(modem_address);
       this->set_password(password);
     }
@@ -218,13 +228,13 @@ namespace tplink {
      *  \brief Sets modem IP address or domain name.
      *  \param modem_address : modem IP address or domain name
      */
-    void set_address(std::string & modem_address);
+    void set_address(const std::string & modem_address);
     
     /** \fn void set_password(std::string & password)
      *  \brief Sets modem admin password.
      *  \param password : modem admin password.
      */
-    void set_password(std::string & password);
+    void set_password(const std::string & password);
     
     /** \fn bool login()
      *  \brief Attempts to log in to the modem's web interface.
@@ -500,14 +510,14 @@ namespace tplink {
      *  \param new_password : new password.
      *  \returns true if action was successful, false otherwise.
      */
-    bool change_password(std::string & old_password, std::string & new_password);
+    bool change_password(const std::string & old_password, const std::string & new_password);
     
     /** \fn rj::Document read_sms(int box)
      *  \brief Reads messages from given mailbox.
      *  \param box : mailbox number (see MAILBOX_ENUM)
      *  \returns a JSON object containing retrieved messages, or an empty object if request failed.
      */
-    rj::Document read_sms(int box);
+    rj::Document read_sms(const int box);
     
     /** \fn bool send_sms(std::string phone_number, std::string message)
      *  \brief Sends a SMS through the TP-Link M7350 interface.
@@ -515,7 +525,7 @@ namespace tplink {
      *  \param message : text message to send
      *  \returns true if successful, false otherwise.
      */
-    bool send_sms(std::string phone_number, std::string message);
+    bool send_sms(const std::string & phone_number, const std::string & message);
     
     /** \fn bool delete_sms(int box, std::vector<int> & indices)
      *  \brief Deletes messages stored in the TP-Link M7350 memory.
@@ -523,7 +533,7 @@ namespace tplink {
      *  \param indices : a list of message indices to delete.
      *  \returns true if successful, false otherwise.
      */
-    bool delete_sms(int box, std::vector<int> & indices);
+    bool delete_sms(const int box, const std::vector<int> & indices);
     
   };
 }
