@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['post_5fdata',['post_data',['../tplink__m7350_8cxx.html#aaaa54003e7042d89463da35ecb979e2b',1,'tplink']]]
+  ['initialize_0',['initialize',['../classtplink_1_1_t_p_link___m7350.html#a38eada24439e133961599dd8e9ee6b8f',1,'tplink::TPLink_M7350']]]
 ];

@@ -1,25 +1,6 @@
 var searchData=
 [
-  ['get_5falg',['get_alg',['../classtplink_1_1_t_p_link___m7350.html#a4f9b07da8e2e4e3b5bbd8753346f5fcb',1,'tplink::TPLink_M7350']]],
-  ['get_5fconnected_5fdevices',['get_connected_devices',['../classtplink_1_1_t_p_link___m7350.html#a544518c24728c607d68cc632874b3eef',1,'tplink::TPLink_M7350']]],
-  ['get_5fdata_5farray',['get_data_array',['../classtplink_1_1_t_p_link___m7350.html#a46465054e07aacbf9bef3f6d6425a559',1,'tplink::TPLink_M7350']]],
-  ['get_5fdmz',['get_dmz',['../classtplink_1_1_t_p_link___m7350.html#abea43a06eba11e28d8cc2c5330b43e7e',1,'tplink::TPLink_M7350']]],
-  ['get_5fflow_5fstat',['get_flow_stat',['../classtplink_1_1_t_p_link___m7350.html#a4d7ef7cf5a3548b1300916307b102af4',1,'tplink::TPLink_M7350']]],
-  ['get_5flan',['get_lan',['../classtplink_1_1_t_p_link___m7350.html#ae7de27023a775de55225be2831ecbf16',1,'tplink::TPLink_M7350']]],
-  ['get_5flog',['get_log',['../classtplink_1_1_t_p_link___m7350.html#a2d43d55f84391643809d8214f6e29d39',1,'tplink::TPLink_M7350']]],
-  ['get_5fmac_5ffilters',['get_mac_filters',['../classtplink_1_1_t_p_link___m7350.html#a145b3ee1bd5e2223050c83a36d450608',1,'tplink::TPLink_M7350']]],
-  ['get_5fmd5_5fhash',['get_md5_hash',['../tplink__m7350_8cxx.html#a57e9d0268016b77d713d00ceb3416785',1,'tplink']]],
-  ['get_5fport_5ftriggering',['get_port_triggering',['../classtplink_1_1_t_p_link___m7350.html#ad865c18abd2dceb85e31cca23b776c92',1,'tplink::TPLink_M7350']]],
-  ['get_5fpower_5fsave',['get_power_save',['../classtplink_1_1_t_p_link___m7350.html#a0723f43587bb4ce21e7294547ae3fa9d',1,'tplink::TPLink_M7350']]],
-  ['get_5fsim_5flock',['get_sim_lock',['../classtplink_1_1_t_p_link___m7350.html#ac0fdf9d4466ac6e25babde3241613911',1,'tplink::TPLink_M7350']]],
-  ['get_5fstatus',['get_status',['../classtplink_1_1_t_p_link___m7350.html#aa70c0e0390db6133e18b4670e5352958',1,'tplink::TPLink_M7350']]],
-  ['get_5fstorage_5fshare',['get_storage_share',['../classtplink_1_1_t_p_link___m7350.html#af6178f4009f9024973fb8fe3a7ae8d8e',1,'tplink::TPLink_M7350']]],
-  ['get_5ftime',['get_time',['../classtplink_1_1_t_p_link___m7350.html#a3596af50527140a6960b7370201aa541',1,'tplink::TPLink_M7350']]],
-  ['get_5fupdate',['get_update',['../classtplink_1_1_t_p_link___m7350.html#ae314faa205093777c53fab5c164036a9',1,'tplink::TPLink_M7350']]],
-  ['get_5fupnp',['get_upnp',['../classtplink_1_1_t_p_link___m7350.html#ad722cd9adde5ec0066c8db0c526da469',1,'tplink::TPLink_M7350']]],
-  ['get_5fvirtual_5fserver',['get_virtual_server',['../classtplink_1_1_t_p_link___m7350.html#a016b9f28df01f0670a114203615142f8',1,'tplink::TPLink_M7350']]],
-  ['get_5fvoice',['get_voice',['../classtplink_1_1_t_p_link___m7350.html#a5dafb408e4ad3b4dff680d3182e5f4a0',1,'tplink::TPLink_M7350']]],
-  ['get_5fwan',['get_wan',['../classtplink_1_1_t_p_link___m7350.html#aa9ab346f1f9430ef8b64a6b3c9ec80a6',1,'tplink::TPLink_M7350']]],
-  ['get_5fweb_5fserver',['get_web_server',['../classtplink_1_1_t_p_link___m7350.html#ac29c491ad35ade531b3c84a5d29a25f3',1,'tplink::TPLink_M7350']]],
-  ['get_5fwps',['get_wps',['../classtplink_1_1_t_p_link___m7350.html#a3686240fa0a84519bfc79dcece509b68',1,'tplink::TPLink_M7350']]]
+  ['delete_5fport_5ftriggering_5fentry_0',['delete_port_triggering_entry',['../classtplink_1_1_t_p_link___m7350.html#a487624c629534596ab1260827455a868',1,'tplink::TPLink_M7350']]],
+  ['delete_5fsms_1',['delete_sms',['../classtplink_1_1_t_p_link___m7350.html#adbf6d6062ab9b4e3173f7fba934e887d',1,'tplink::TPLink_M7350']]],
+  ['do_5frequest_2',['do_request',['../classtplink_1_1_t_p_link___m7350.html#a92ba9dd043fb053ae73030a8ae09722a',1,'tplink::TPLink_M7350']]]
 ];
