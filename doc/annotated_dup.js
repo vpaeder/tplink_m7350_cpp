@@ -1,6 +1,35 @@
 var annotated_dup =
 [
     [ "tplink", null, [
-      [ "TPLink_M7350", "classtplink_1_1_t_p_link___m7350.html", "classtplink_1_1_t_p_link___m7350" ]
+      [ "ALGOptions", "structtplink_1_1_a_l_g_options.html", null ],
+      [ "APBridgeOptions", "structtplink_1_1_a_p_bridge_options.html", null ],
+      [ "APSecurity", "structtplink_1_1_a_p_security.html", null ],
+      [ "AuthenticatorOptions", "structtplink_1_1_authenticator_options.html", null ],
+      [ "AuthReturnCode", "structtplink_1_1_auth_return_code.html", null ],
+      [ "ConnectedDevicesOptions", "structtplink_1_1_connected_devices_options.html", null ],
+      [ "DMZOptions", "structtplink_1_1_d_m_z_options.html", null ],
+      [ "FirmwareUpdateOptions", "structtplink_1_1_firmware_update_options.html", null ],
+      [ "FlowStatOptions", "structtplink_1_1_flow_stat_options.html", null ],
+      [ "LANOptions", "structtplink_1_1_l_a_n_options.html", null ],
+      [ "LogOptions", "structtplink_1_1_log_options.html", null ],
+      [ "MACFiltersOptions", "structtplink_1_1_m_a_c_filters_options.html", null ],
+      [ "MessageOptions", "structtplink_1_1_message_options.html", null ],
+      [ "MessageReturnCode", "structtplink_1_1_message_return_code.html", null ],
+      [ "Modules", "structtplink_1_1_modules.html", null ],
+      [ "PortTriggeringOptions", "structtplink_1_1_port_triggering_options.html", null ],
+      [ "PowerSavingOptions", "structtplink_1_1_power_saving_options.html", null ],
+      [ "RebootOptions", "structtplink_1_1_reboot_options.html", null ],
+      [ "SIMLockOptions", "structtplink_1_1_s_i_m_lock_options.html", null ],
+      [ "StorageShareOptions", "structtplink_1_1_storage_share_options.html", null ],
+      [ "TimeOptions", "structtplink_1_1_time_options.html", null ],
+      [ "TPLink_M7350", "classtplink_1_1_t_p_link___m7350.html", "classtplink_1_1_t_p_link___m7350" ],
+      [ "UPnPOptions", "structtplink_1_1_u_pn_p_options.html", null ],
+      [ "VirtualServerOptions", "structtplink_1_1_virtual_server_options.html", null ],
+      [ "VoiceOptions", "structtplink_1_1_voice_options.html", null ],
+      [ "WANOptions", "structtplink_1_1_w_a_n_options.html", null ],
+      [ "WebReturnCode", "structtplink_1_1_web_return_code.html", null ],
+      [ "WebServerOptions", "structtplink_1_1_web_server_options.html", null ],
+      [ "WLANOptions", "structtplink_1_1_w_l_a_n_options.html", null ],
+      [ "WPSOptions", "structtplink_1_1_w_p_s_options.html", null ]
     ] ]
 ];
