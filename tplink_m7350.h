@@ -1,24 +1,24 @@
 /** \file tplink_m7350.h
- *  This is a minimal C++ interface to communicate with the TP-Link M7350 modem's
- *  web gateway interface. This was tested to work with modem
- *  version 5 and firmware version 1.0.10.
+ *  This is a minimal C++ interface to communicate with the TP-Link M7350 modem
+ *  web gateway interface. This was tested to work with modem version 5.
  *  Author: Vincent Paeder
  *  License: GPL v3
  */
-#ifndef TPLINK_M7350_H
-#define TPLINK_M7350_H
-
+#pragma once
 #include <string>
 #include <vector>
 #include <iostream>
 #include <rapidjson/document.h>
+#include <curl/curl.h>
+
+#include "tp_m3750_enums.h"
 
 namespace tplink {
 
   template <typename... Args> void tp_logger(const char * level, const char * file, const int line, const Args... args) {
-      std::cout << level << ":[" << file << "|" << line << "] ";
-      ([&]{std::cout << args;}(), ...);
-      std::cout << std::endl;
+    std::cout << level << ":[" << file << "|" << line << "] ";
+    ([&]{std::cout << args;}(), ...);
+    std::cout << std::endl;
   }
   #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
   #ifndef NDEBUG
@@ -32,510 +32,461 @@ namespace tplink {
   #define LOG_E(...)
   #define LOG_I(...)
   #endif
-  
-  /** \enum TPLINK_CONFIG_ENUM
-   *  \brief Shared command codes for TP-Link M7350 web_cgi modules.
-   */
-  enum TPLINK_CONFIG_ENUM {
-    /** Get configuration */
-    TPLINK_GET_CONFIG = 0,
-    /** Set configuration */
-    TPLINK_SET_CONFIG = 1
-  };
-  
-  /** \enum AUTH_ERROR_CODE_ENUM
-   *  \brief Return codes for TP-Link M7350 auth_cgi.
-   */
-  enum AUTH_ERROR_CODE_ENUM {
-    /** Command was executed successfully */
-    AUTH_SUCCESS = 0,
-    /** One or more parameters were incorrect */
-    AUTH_NOT_MATCH = 1,
-    /** Command failed to execute */
-    AUTH_FAILURE = 2
-  };
-  
-  /** \enum WEB_ERROR_CODE_ENUM
-   *  \brief Return codes for TP-Link M7350 web_cgi.
-   */
-  enum WEB_ERROR_CODE_ENUM {
-    /** Command was executed successfully */
-    WEB_SUCCESS = 0,
-    /** Given token validity has been cancelled */
-    WEB_KICKED_OUT = -2,
-    /** Given token doesn't match stored one */
-    WEB_TOKEN_ERROR = -3
-  };
+	
+	/** \brief Wrap a C deleter function for use with smart pointers.
+	 * 
+	 *  This relies on the behaviour of the call operator that assumes
+	 *  that the left-hand side argument should be a function, and therefore
+	 *  gets cast to function pointer. At the same time, the integral_constant
+	 *  instance gives the wrapped value type as its own type.
+	 * 
+	 *  \tparam DeleterFunction: C deleter function.
+	 */
+	template <auto DeleterFunction>
+	using CustomDeleter = std::integral_constant<std::decay_t<decltype(DeleterFunction)>, DeleterFunction>;
 
-  /** \enum AUTHENTICATOR_MODULE_ENUM
-   *  \brief Command codes for TP-Link M7350 authenticator module.
-   */
-  enum AUTHENTICATOR_MODULE_ENUM {
-    /** Load */
-    AUTHENTICATOR_LOAD = 0,
-    /** Perform login */
-    AUTHENTICATOR_LOGIN = 1,
-    /** Get number of login attempts */
-    AUTHENTICATOR_GET_ATTEMPT = 2,
-    /** Perform logout */
-    AUTHENTICATOR_LOGOUT = 3,
-    /** Perform page update */
-    AUTHENTICATOR_UPDATE = 4
-  };
+	/** \brief A pointer that wraps an object and defines a deleter from a deleter function.
+	 *  \tparam WrappedType: object type.
+	 *  \tparam DeleterFunction: deleter function.
+	 */
+	template <typename WrappedType, auto DeleterFunction>
+	using UniquePointer = std::unique_ptr<WrappedType, CustomDeleter<DeleterFunction> >;
 
-  /** \enum MESSAGE_MODULE_ENUM
-   *  \brief Command codes for TP-Link M7350 message module.
-   */
-  enum MESSAGE_MODULE_ENUM {
-    /** Get message module configuration */
-    MESSAGE_GET_CONFIG = 0,
-    /** Set message module configuration */
-    MESSAGE_SET_CONFIG = 1,
-    /** Read stored message list */
-    MESSAGE_READ_MSG = 2,
-    /** Send message */
-    MESSAGE_SEND_MSG = 3,
-    /** Save message */
-    MESSAGE_SAVE_MSG = 4,
-    /** Delete message(s) */
-    MESSAGE_DEL_MSG = 5,
-    /** Mark message(s) as read */
-    MESSAGE_MARK_READ = 6,
-    /** Request current status */
-    MESSAGE_GET_SEND_STATUS = 7
-  };
+	namespace rj = rapidjson;
+	
+	/** \brief Class handling communication with a TP-Link M7350 v5 web interface. */
+	class TPLink_M7350 {
+	private:
+    /** \brief CURL object used to handle HTTP connections */
+    UniquePointer<CURL, curl_easy_cleanup> conn;
 
-  /** \enum SEND_MESSAGE_ENUM
-   *  \brief Return codes for TP-Link M7350 'send message' function.
-   */
-  enum SEND_MESSAGE_ENUM {
-    /** Message sent and saved successfully */
-     SMS_SEND_SUCCESS_SAVE_SUCCESS = 0,
-    /** Message sent successfully but not saved */
-     SMS_SEND_SUCCESS_SAVE_FAIL = 1,
-    /** Message save successfully but not sent */
-     SMS_SEND_FAIL_SAVE_SUCCESS = 2,
-    /** Message not sent and not saved */
-     SMS_SEND_FAIL_SAVE_FAIL = 3,
-    /** Currently sending */
-     SMS_SENDING = 4
-  };
-  
-  /** \enum MAILBOX_ENUM
-   *  \brief Mailbox codes for TP-Link M7350.
-   */
-  enum MAILBOX_ENUM {
-  /** Inbox */
-   MAILBOX_INBOX = 0,
-  /** Outbox */
-   MAILBOX_OUTBOX = 1
-  };
-  
-  namespace rj = rapidjson;
-  
-  /** \fn std::string get_md5_hash(std::string & str)
-   *  \brief Compute MD5 hash of input string.
-   *  \param str : string to compute hash for.
-   *  \returns MD5 hash of input string.
-   */
-  std::string get_md5_hash(const std::string & str);
-    
-  /** \fn rj::Document post_data(std::string & url, std::string & data)
-   *  \brief Sends a HTTP POST request to given URL with given POST data and returns reply parsed as JSON.
-   *  \param url : URL to send request to.
-   *  \param data : data to join with the POST request.
-   *  \returns a RapidJSON document object containing parsed server reply.
-   */
-  rj::Document post_data(const std::string & url, const std::string & data);
+    /** \brief modem base URL */
+    std::string modem_address = "http://192.168.0.1";
 
-  /** \class TPLink_M7350
-   *  \brief Class handling communication with a TP-Link M7350 v5 web interface.
-   */
-  class TPLink_M7350 {
-  private:
-    /** \property std::string auth_url
-     *  \brief URL of authenticator interface
-     */
+    /** \brief URL of authenticator interface */
     std::string auth_url = "http://192.168.0.1/cgi-bin/auth_cgi";
     
-    /** \property std::string web_url
-     *  \brief URL of web interface
-     */
+    /** \brief URL of web interface */
     std::string web_url = "http://192.168.0.1/cgi-bin/web_cgi";
     
-    /** \property std::string password
-     *  \brief Modem administrator password
-     */
+    /** \brief Modem administrator password */
     std::string password;
-  
-    /** \property bool logged_in
-     *  \brief True if the object is authenticated with the modem
-     */
+
+    /** \brief True if the object is authenticated with the modem */
     bool logged_in = false;
     
-    /** \property std::string token
-     *  \brief Authentication token
-     */
+    /** \brief Authentication token */
     std::string token;
-  
-    /** \fn rj::Document build_request_object(std::string module, int action)
-     *  \brief Builds object to produce a JSON request
-     *  \param module : name of module to query
-     *  \param action : code of action to perform
+
+    /** \brief Initialize instance */
+    void initialize();
+    
+  #if NEW_FIRMWARE==1
+    /** \brief Hashed password, used to generate message signatures */
+    std::string hash;
+
+    /** \brief AES key */
+    unsigned char aes_key[16];
+    /** \brief AES initialization vector */
+    unsigned char aes_iv[16];
+    /** \brief RSA key module */
+    std::string rsa_mod;
+    /** \brief RSA key exponent */
+    std::string rsa_exp;
+    /** \brief Salt for RSA sign */
+    unsigned int seq;
+
+    /** \brief Initialize instance. */
+    void generate_aes_keys();
+
+    /** \brief Encrypt given data using RSA.
+     *  \param data: data to encrypt.
+     *  \returns encrypted data.
+    */
+    std::string rsa_encrypt(const std::string & data) const;
+
+    /** \brief Generate a message signature using RSA.
+     *  \param increment: a number added to the signature salt.
+     *  \param include_aes_key: if true, include AES key/iv in signature.
+     *  \returns signature string.
+    */
+    std::string rsa_sign(const int increment, const bool include_aes_key) const;
+
+    /** \brief Encrypt given data with AES.
+     *  \param data: data to encrypt.
+     *  \returns encrypted data.
+     */
+    std::string aes_encrypt(const std::string & data) const;
+  #endif // NEW_FIRMWARE
+
+    /** \brief Decrypt given data with AES.
+     *  This does something only if NEW_FIRMWARE is set to Yes. Otherwise, this
+     *  is just a pass-through method.
+     *  \param data: data to decrypt.
+     *  \returns decrypted data.
+     */
+    std::string aes_decrypt(const std::string & data) const;
+
+    /** \brief Encrypt given data.
+     *  This does something only if NEW_FIRMWARE is set to Yes. Otherwise, this
+     *  is just a pass-through method.
+     *  \param data: data to encrypt.
+     *  \param include_aes_key: if true, include AES key/iv in signature.
+     *  \returns encrypted data.
+    */
+    std::string encrypt(const std::string & data, const bool include_aes_key) const;
+
+    /** \brief Build object to produce a JSON request
+     *  \param module: name of module to query
+     *  \param action: code of action to perform
      *  \returns a RapidJSON object containing necessary items.
      */
-    rj::Document build_request_object(const std::string & module, const int action);
+    rj::Document build_request_object(const std::string & module, const int action) const;
     
-    /** \fn rj::Document send_request(std::string module, int action)
-     *  \brief Sends a request to the modem's web gateway interface and returns reply.
-     *  \param module : name of module to query
-     *  \param action : code of action to perform
-     *  \returns a RapidJSON object containing modem's reply, or an empty object if request failed.
+    /** \brief Send a HTTP POST request to given URL with given POST data and return reply.
+     *  \param url: URL to send request to.
+     *  \param data: data to join with the POST request.
+     *  \returns server reply as string.
      */
-    rj::Document send_request(const std::string & module, const int action);
+    std::string post_request(const std::string & url, const std::string & data) const;
+
+    /** \brief Parse a server response, assuming it is in JSON format.
+     *  \param data: server response as string.
+     *  \param is_encrypted: if true, assume response must be decrypted first.
+     *  \returns a RapidJSON document object containing parsed server reply.
+     */
+    rj::Document parse_response(const std::string & data, const bool is_encrypted) const;
+
+    /** \brief Send a request to the modem web gateway interface and return reply.
+     *  \param module: name of module to query
+     *  \param action: code of action to perform
+     *  \returns a RapidJSON object containing modem reply, or an empty object if request failed.
+     */
+    rj::Document do_request(const std::string & module, const int action) const;
     
-    /** \fn bool send_data(std::string module, int action, rj::Document & data)
-     *  \brief Sends data to the modem's web gateway interface.
-     *  \param module : name of module to send data to
-     *  \param action : code of action to perform with data
-     *  \param data : JSON object containing data to be sent
+    /** \brief Send data to the modem web gateway interface.
+     *  \param module: name of module to send data to
+     *  \param action: code of action to perform with data
+     *  \param data: JSON object containing data to be sent
      *  \returns true if operation was successful, false otherwise.
      */
-    bool send_data(const std::string & module, const int action, const rj::Document & data);
+    bool send_data(const std::string & module, const int action, const rj::Document & data) const;
     
-    /** \fn rj::Document get_data_array(rj::Document & request, std::string field)
-     *  \brief Retrieves data array from modem's web gateway interface.
-     *  \param request : JSON object containing request parameters to reach required array.
-     *  \param field : name of data array.
+    /** \brief Retrieve data array from modem web gateway interface.
+     *  \param request: JSON object containing request parameters to reach required array.
+     *  \param field: name of data array.
      *  \returns a JSON object containing the requested data array, or an empty object if request failed.
      */
-    rj::Document get_data_array(rj::Document & request, const std::string & field);
+    rj::Document get_data_array(rj::Document & request, const std::string & field) const;
+
+	public:
+    /** \brief Default constructor. */
+    TPLink_M7350();
     
-  public:
-    TPLink_M7350() = default;
-    
-    /** \fn TPLink_M7350(std::string & modem_address, std::string & password)
-     *  \brief Instance constructor.
-     *  \param modem_address : IP or DNS address of modem
-     *  \param password : modem admin password
+    /** \brief Constructor with parameters.
+     *  \param modem_address: IP or DNS address of modem
+     *  \param password: modem admin password
      */
-    TPLink_M7350(const std::string & modem_address, const std::string & password) {
-      this->set_address(modem_address);
-      this->set_password(password);
-    }
-    
+    TPLink_M7350(const std::string & modem_address, const std::string & password);
+
     /** \fn void set_address(std::string & modem_address)
-     *  \brief Sets modem IP address or domain name.
-     *  \param modem_address : modem IP address or domain name
+     *  \brief Set modem IP address or domain name.
+     *  \param modem_address: modem IP address or domain name
      */
     void set_address(const std::string & modem_address);
     
     /** \fn void set_password(std::string & password)
-     *  \brief Sets modem admin password.
-     *  \param password : modem admin password.
+     *  \brief Set modem admin password.
+     *  \param password: modem admin password.
      */
     void set_password(const std::string & password);
     
-    /** \fn bool login()
-     *  \brief Attempts to log in to the modem's web interface.
+    /** \brief Retrieve settings for alg module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_alg_settings() const;
+    
+    /** \brief Set configuration for alg module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_alg_settings(const rj::Document & data) const;
+
+    /** \brief Retrieve settings for AP bridge module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_ap_bridge_settings() const;
+
+    /** \brief Set configuration for AP bridge module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_ap_bridge_settings(const rj::Document & data) const;
+
+    /** \brief Connect with access point with specified parameters.
+     *  Access point details must be as follows:
+     *  {"apSSID": string, "apPassword": string, "apSecurity": see APSecurity enum, "ap8021xType": string}
+     *  \param data: JSON object containing access point details.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool connect_ap(const rj::Document & data) const;
+
+    /** \brief Scan for access points.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document scan_ap() const;
+
+    /** \brief Check access point connection status.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document check_ap_connection_status() const;
+
+    /** \brief Attempt to log in into modem web interface.
      *  \returns true if operation was successful, false otherwise.
      */
     bool login();
     
     /** \fn bool logout()
-     *  \brief Attempts to log out from the modem's web interface.
+     *  \brief Attempt to log out from modem web interface.
      *  \returns true if operation was successful, false otherwise.
      */
     bool logout();
     
-    /** \fn rj::Document get_web_server()
-     *  \brief Retrieves configuration settings for webServer module.
-     *  \returns JSON object with modem's reply.
+    /** \brief Get number of login attempts.
+     *  \returns JSON object with modem reply.
      */
-    rj::Document get_web_server();
-    
-    /** \fn rj::Document get_status()
-     *  \brief Retrieves information from status module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_status();
-    
-    /** \fn rj::Document get_wan()
-     *  \brief Retrieves configuration settings for wan module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_wan();
-    
-    /** \fn rj::Document get_sim_lock()
-     *  \brief Retrieves configuration settings for simLock module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_sim_lock();
-    
-    /** \fn rj::Document get_wps()
-     *  \brief Retrieves configuration settings for wps module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_wps();
-    
-    /** \fn rj::Document get_power_save()
-     *  \brief Retrieves configuration settings for power_save module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_power_save();
-    
-    /** \fn rj::Document get_flow_stat()
-     *  \brief Retrieves configuration settings for flowstat module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_flow_stat();
-    
-    /** \fn rj::Document get_connected_devices()
-     *  \brief Retrieves information for connected devices.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_connected_devices();
-    
-    /** \fn rj::Document get_mac_filters()
-     *  \brief Retrieves configuration settings for macFilters module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_mac_filters();
-    
-    /** \fn rj::Document get_lan()
-     *  \brief Retrieves configuration settings for lan module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_lan();
-    
-    /** \fn rj::Document get_update()
-     *  \brief Retrieves configuration settings for update module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_update();
-    
-    /** \fn rj::Document get_storage_share()
-     *  \brief Retrieves configuration settings for storageShare module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_storage_share();
-    
-    /** \fn rj::Document get_time()
-     *  \brief Retrieves configuration settings for time module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_time();
-    
-    /** \fn rj::Document get_log()
-     *  \brief Retrieves modem logs.
-     *  \returns JSON object with log entries.
-     */
-    rj::Document get_log();
-    
-    /** \fn rj::Document get_voice()
-     *  \brief Retrieves configuration settings for voice module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_voice();
-    
-    /** \fn rj::Document get_upnp()
-     *  \brief Retrieves configuration settings for upnp module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_upnp();
-    
-    /** \fn rj::Document get_dmz()
-     *  \brief Retrieves configuration settings for dmz module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_dmz();
-    
-    /** \fn rj::Document get_alg()
-     *  \brief Retrieves configuration settings for alg module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_alg();
-    
-    /** \fn rj::Document get_virtual_server()
-     *  \brief Retrieves configuration settings for virtualServer module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_virtual_server();
-    
-    /** \fn rj::Document get_port_triggering()
-     *  \brief Retrieves configuration settings for portTrigger module.
-     *  \returns JSON object with modem's reply.
-     */
-    rj::Document get_port_triggering();
-    
-    /** \fn bool set_web_server(rj::Document & data)
-     *  \brief Sets configuration settings for webServer module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_web_server(rj::Document & data);
-    
-    /** \fn bool set_wan(rj::Document & data)
-     *  \brief Sets configuration settings for wan module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_wan(rj::Document & data);
-    
-    /** \fn bool set_sim_lock(rj::Document & data)
-     *  \brief Sets configuration settings for simLock module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_sim_lock(rj::Document & data);
-    
-    /** \fn bool set_wps(rj::Document & data)
-     *  \brief Sets configuration settings for wps module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_wps(rj::Document & data);
-    
-    /** \fn bool set_power_save(rj::Document & data)
-     *  \brief Sets configuration settings for power_save module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_power_save(rj::Document & data);
-    
-    /** \fn bool set_flow_stat(rj::Document & data)
-     *  \brief Sets configuration settings for flowstat module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_flow_stat(rj::Document & data);
-    
-    /** \fn bool set_mac_filters(rj::Document & data)
-     *  \brief Sets configuration settings for macFilters module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_mac_filters(rj::Document & data);
-    
-    /** \fn bool set_lan(rj::Document & data)
-     *  \brief Sets configuration settings for lan module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_lan(rj::Document & data);
-    
-    /** \fn bool set_storage_share(rj::Document & data)
-     *  \brief Sets configuration settings for storageShare module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_storage_share(rj::Document & data);
-    
-    /** \fn bool set_time(rj::Document & data)
-     *  \brief Sets configuration settings for time module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_time(rj::Document & data);
-    
-    /** \fn bool set_voice(rj::Document & data)
-     *  \brief Sets configuration settings for voice module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_voice(rj::Document & data);
-    
-    /** \fn bool set_upnp(rj::Document & data)
-     *  \brief Sets configuration settings for upnp module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_upnp(rj::Document & data);
-    
-    /** \fn bool set_dmz(rj::Document & data)
-     *  \brief Sets configuration settings for dmz module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_dmz(rj::Document & data);
-    
-    /** \fn bool set_alg(rj::Document & data)
-     *  \brief Sets configuration settings for alg module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_alg(rj::Document & data);
-    
-    /** \fn bool set_virtual_server(rj::Document & data)
-     *  \brief Sets configuration settings for virtualServer module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_virtual_server(rj::Document & data);
-    
-    /** \fn bool set_port_triggering(rj::Document & data)
-     *  \brief Sets configuration settings for portTrigger module.
-     *  \param data : JSON object containing configuration settings.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool set_port_triggering(rj::Document & data);
-    
-    /** \fn bool reboot()
-     *  \brief Attempts to reboot the modem.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool reboot();
-    
-    /** \fn bool shutdown()
-     *  \brief Attempts to shutdown the modem.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool shutdown();
-    
-    /** \fn bool restore_defaults()
-     *  \brief Attempts to restore factory defaults.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool restore_defaults();
-    
-    /** \fn bool clear_log()
-     *  \brief Attempts to clear modem logs.
-     *  \returns true if action was successful, false otherwise.
-     */
-    bool clear_log();
-    
-    /** \fn bool change_password(std::string & old_password, std::string & new_password)
-     *  \brief Attempts to change admin password.
-     *  \param old_password : password currently set.
-     *  \param new_password : new password.
+    rj::Document get_login_attempt_count() const;
+
+    /** \brief Attempt to change admin password.
+     *  \param old_password: password currently set.
+     *  \param new_password: new password.
      *  \returns true if action was successful, false otherwise.
      */
     bool change_password(const std::string & old_password, const std::string & new_password);
     
-    /** \fn rj::Document read_sms(int box)
-     *  \brief Reads messages from given mailbox.
-     *  \param box : mailbox number (see MAILBOX_ENUM)
+    /** \brief Retrieve information for connected devices.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_connected_devices() const;
+    
+    /** \brief Retrieve settings for DMZ module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_dmz_settings() const;
+    
+    /** \brief Set configuration for DMZ module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_dmz_settings(const rj::Document & data) const;
+    
+    /** \brief Retrieve settings for flowstat module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_flow_stat_settings() const;
+    
+    /** \brief Set configuration for flowstat module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_flow_stat_settings(const rj::Document & data) const;
+    
+    /** \brief Retrieve settings for lan module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_lan_settings() const;
+    
+    /** \brief Set configuration for lan module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_lan_settings(const rj::Document & data) const;
+    
+    /** \brief Retrieve modem logs.
+     *  \returns JSON object with log entries.
+     */
+    rj::Document get_log() const;
+    
+    /** \brief Clear logs.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool clear_log() const;
+
+    /** \brief Retrieve settings for macFilters module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_mac_filters() const;
+
+    /** \brief Set configuration for macFilters module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successSet configurationful, false otherwise.
+     */
+    bool set_mac_filters(const rj::Document & data) const;
+    
+    /** \brief Reads messages from given mailbox.
+     *  \param box: mailbox number (see MAILBOX_ENUM)
      *  \returns a JSON object containing retrieved messages, or an empty object if request failed.
      */
-    rj::Document read_sms(const int box);
+    rj::Document read_sms(const MailboxCode box) const;
     
-    /** \fn bool send_sms(std::string phone_number, std::string message)
-     *  \brief Sends a SMS through the TP-Link M7350 interface.
-     *  \param phone_number : recipient number
-     *  \param message : text message to send
+    /** \brief Sends a SMS through the TP-Link M7350 interface.
+     *  \param phone_number: recipient number
+     *  \param message: text message to send
      *  \returns true if successful, false otherwise.
      */
-    bool send_sms(const std::string & phone_number, const std::string & message);
+    bool send_sms(const std::string & phone_number, const std::string & message) const;
     
-    /** \fn bool delete_sms(int box, std::vector<int> & indices)
-     *  \brief Deletes messages stored in the TP-Link M7350 memory.
-     *  \param box : mailbox number (see MAILBOX_ENUM)
-     *  \param indices : a list of message indices to delete.
+    /** \brief Deletes messages stored in the TP-Link M7350 memory.
+     *  \param box: mailbox number (see MAILBOX_ENUM)
+     *  \param indices: a list of message indices to delete.
      *  \returns true if successful, false otherwise.
      */
-    bool delete_sms(const int box, const std::vector<int> & indices);
-    
-  };
-}
+    bool delete_sms(const MailboxCode box, const std::vector<int> & indices) const;
 
-#endif // TPLINK_M7350_H
+    /** \brief Retrieve settings for portTrigger module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_port_triggering_settings() const;
+    
+    /** \brief Set configuration for portTrigger module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_port_triggering_settings(const rj::Document & data) const;
+
+    /** \brief Delete entry from portTrigger module.
+     *  \param data: JSON object containing entry details.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool delete_port_triggering_entry(const rj::Document & data) const;
+
+    /** \brief Retrieve settings for power_save module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_power_save_settings() const;
+      
+    /** \brief Set configuration for power_save module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_power_save_settings(const rj::Document & data) const;
+    
+    /** \brief Attempt to reboot modem.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool reboot();
+    
+    /** \brief Attempt to shutdown modem.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool shutdown();
+    
+    /** \brief Retrieve settings for simLock module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_sim_lock_settings() const;
+
+    /** \brief Retrieve information from status module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_status() const;
+    
+    /** \brief Retrieve settings for storageShare module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_storage_share_settings() const;
+    
+    /** \brief Set configuration for storageShare module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_storage_share_settings(const rj::Document & data) const;
+
+    /** \brief Retrieve settings for time module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_time_settings() const;
+    
+    /** \brief Set configuration for time module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_time_settings(const rj::Document & data) const;
+    
+    /** \brief Retrieve settings for update module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_firmware_update_settings() const;
+
+    /** \brief Retrieve settings for upnp module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_upnp_settings() const;
+    
+    /** \brief Set configuration for upnp module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_upnp_settings(const rj::Document & data) const;
+    
+    /** \brief Retrieve settings for virtualServer module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_virtual_server_settings() const;
+    
+    /** \brief Set configuration for virtualServer module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_virtual_server_settings(const rj::Document & data) const;
+    
+    /** \brief Retrieve settings for voice module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_voice_settings() const;
+    
+    /** \brief Retrieve settings for wan module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_wan_settings() const;
+    
+    /** \brief Set configuration for wan module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_wan_settings(const rj::Document & data) const;
+      
+    /** \brief Retrieve settings for webServer module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_web_server_info() const;
+    
+    /** \brief Retrieve settings for WLAN module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_wlan_settings() const;
+    
+    /** \brief Set configuration for WLAN module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_wlan_settings(const rj::Document & data) const;
+
+    /** \brief Retrieve settings for wps module.
+     *  \returns JSON object with modem reply.
+     */
+    rj::Document get_wps_settings() const;
+    
+    /** \brief Set configuration for wps module.
+     *  \param data: JSON object containing configuration settings.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool set_wps_settings(const rj::Document & data) const;
+      
+    /** \brief Restore factory defaults.
+     *  \returns true if action was successful, false otherwise.
+     */
+    bool restore_defaults() const;
+    
+	};
+}

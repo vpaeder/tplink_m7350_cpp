@@ -55,8 +55,6 @@ int main( int argc, char** argv ) {
 		return 1;
 	}
 
-	TPLink_M7350 tpl;
-	tpl.set_address(address);
-	tpl.set_password(passwd);
+	TPLink_M7350 tpl(address, passwd);
 	return tpl.send_sms(phone_number, message) ? 0 : 1;
 }
