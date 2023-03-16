@@ -6,7 +6,7 @@ Note that it may work with other TP-Link models, but I only have that one to tes
 # Requirements
 - RapidJSON - https://rapidjson.org
 - CURL - https://curl.haxx.se/libcurl/
-- OpenSSL - https://www.openssl.org
+- OpenSSL v3 - https://www.openssl.org
 - CMake (for compilation, optional) - https://cmake.org
 - Doxygen (for docs, optional) - http://doxygen.nl
 
