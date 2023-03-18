@@ -78,9 +78,6 @@ namespace tplink {
 		return std::string(decoded, len);
 	}
 
-	/* CURL error buffer */
-	static char error_buffer[CURL_ERROR_SIZE];
-
 	/* CURL writer callback (collect server response) */
 	static int writer(char *data, size_t size, size_t nmemb, std::string *writer_data) {
 		if (writer_data == nullptr)
@@ -105,7 +102,8 @@ namespace tplink {
 	void TPLink_M7350::initialize() {
 		this->conn = UniquePointer<CURL, curl_easy_cleanup>(curl_easy_init());
 		// set error buffer for CURL
-		assert(curl_easy_setopt(this->conn.get(), CURLOPT_ERRORBUFFER, &error_buffer) == CURLE_OK);
+		this->error_buffer.resize(CURL_ERROR_SIZE);
+		assert(curl_easy_setopt(this->conn.get(), CURLOPT_ERRORBUFFER, &this->error_buffer[0]) == CURLE_OK);
 		// set data writer function
 		assert(curl_easy_setopt(this->conn.get(), CURLOPT_WRITEFUNCTION, writer)  == CURLE_OK);
 	}

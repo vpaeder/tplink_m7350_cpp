@@ -8,20 +8,21 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
 #include <rapidjson/document.h>
 #include <curl/curl.h>
 
-#include "tp_m3750_enums.h"
+#include "tp_m7350_enums.h"
 
 namespace tplink {
 
+  #ifndef NDEBUG
   template <typename... Args> void tp_logger(const char * level, const char * file, const int line, const Args... args) {
     std::cout << level << ":[" << file << "|" << line << "] ";
     ([&]{std::cout << args;}(), ...);
     std::cout << std::endl;
   }
   #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-  #ifndef NDEBUG
   #define LOG_V(...) tp_logger("V", __FILENAME__, __LINE__, __VA_ARGS__)
   #define LOG_D(...) tp_logger("D", __FILENAME__, __LINE__, __VA_ARGS__)
   #define LOG_E(...) tp_logger("E", __FILENAME__, __LINE__, __VA_ARGS__)
@@ -58,7 +59,10 @@ namespace tplink {
 	class TPLink_M7350 {
 	private:
     /** \brief CURL object used to handle HTTP connections */
-    UniquePointer<CURL, curl_easy_cleanup> conn;
+    UniquePointer<CURL, curl_easy_cleanup> conn; 
+
+  	/* CURL error buffer */
+    std::string error_buffer;
 
     /** \brief modem base URL */
     std::string modem_address = "http://192.168.0.1";
@@ -70,29 +74,29 @@ namespace tplink {
     std::string web_url = "http://192.168.0.1/cgi-bin/web_cgi";
     
     /** \brief Modem administrator password */
-    std::string password;
+    std::string password{};
 
     /** \brief True if the object is authenticated with the modem */
     bool logged_in = false;
     
     /** \brief Authentication token */
-    std::string token;
+    std::string token{};
 
     /** \brief Initialize instance */
     void initialize();
     
   #if NEW_FIRMWARE==1
     /** \brief Hashed password, used to generate message signatures */
-    std::string hash;
+    std::string hash{};
 
     /** \brief AES key */
     unsigned char aes_key[16];
     /** \brief AES initialization vector */
     unsigned char aes_iv[16];
     /** \brief RSA key module */
-    std::string rsa_mod;
+    std::string rsa_mod{};
     /** \brief RSA key exponent */
-    std::string rsa_exp;
+    std::string rsa_exp{};
     /** \brief Salt for RSA sign */
     unsigned int seq;
 

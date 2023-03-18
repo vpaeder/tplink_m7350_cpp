@@ -26,6 +26,7 @@ int main( int argc, char** argv ) {
 				std::cout << "Usage:" << std::endl;
 				std::cout << argv[0] << " -a modem_address -p password -n phone_number -m message" << std::endl;
 				std::cout << argv[0] << " -h" << std::endl;
+				return 1;
 				break;
 
 			case 'a':
